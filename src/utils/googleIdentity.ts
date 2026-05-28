@@ -1,17 +1,19 @@
 import type {
+  GmailAccessSession,
   GoogleTokenClient,
   GoogleTokenResponse,
 } from "../types/gmail";
+import { createGmailAccessSession } from "./gmailAccessSession";
 import { GMAIL_READONLY_SCOPE } from "./gmailConfig";
 
 const GOOGLE_IDENTITY_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 
 export const requestGmailAccessToken = async (
   clientId: string,
-): Promise<string> => {
+): Promise<GmailAccessSession> => {
   await loadGoogleIdentityScript();
 
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<GmailAccessSession>((resolve, reject) => {
     const google = window.google;
     if (google === undefined) {
       reject(new Error("Google Identity Services failed to load."));
@@ -35,7 +37,7 @@ export const requestGmailAccessToken = async (
             return;
           }
 
-          resolve(response.access_token);
+          resolve(createGmailAccessSession(response));
         },
         error_callback: (error: unknown) => {
           reject(

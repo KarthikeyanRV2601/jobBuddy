@@ -10,6 +10,7 @@ import type { GmailSyncCache } from "./types/sync";
 import { isApplicationList } from "./utils/applicationGuards";
 import { getApplicationMetrics } from "./utils/applications";
 import { isEmailSignalList } from "./utils/emailGuards";
+import { removeCachedGmailAccessSession } from "./utils/gmailAccessSession";
 import { isNoteList } from "./utils/noteGuards";
 import {
   EMPTY_GMAIL_SYNC_CACHE,
@@ -86,6 +87,7 @@ export const App = () => {
     removeStorageItem(window.localStorage, EMAIL_STORAGE_KEY);
     removeStorageItem(window.localStorage, NOTE_STORAGE_KEY);
     removeStorageItem(window.localStorage, GMAIL_SYNC_CACHE_STORAGE_KEY);
+    removeCachedGmailAccessSession();
   };
 
   return (

@@ -12,6 +12,11 @@ import type { GmailSyncCache } from "../../types/sync";
 import { getDashboardAnalytics } from "../../utils/analytics";
 import { getErrorMessage } from "../../utils/errors";
 import {
+  readCachedGmailAccessSession,
+  removeCachedGmailAccessSession,
+  writeCachedGmailAccessSession,
+} from "../../utils/gmailAccessSession";
+import {
   DEFAULT_GMAIL_QUERY,
   getGoogleClientId,
   hasGoogleClientId,
@@ -48,9 +53,14 @@ export const DashboardView = ({
   onSignalsChange,
   signals,
 }: DashboardViewProps) => {
-  const [accessToken, setAccessToken] = useState<string>("");
+  const initialGmailSession = readCachedGmailAccessSession();
+  const [accessToken, setAccessToken] = useState<string>(
+    initialGmailSession?.accessToken ?? "",
+  );
   const [connectionStatus, setConnectionStatus] =
-    useState<GmailConnectionStatus>("disconnected");
+    useState<GmailConnectionStatus>(
+      initialGmailSession === null ? "disconnected" : "connected",
+    );
   const [syncQuery, setSyncQuery] = useState<string>(DEFAULT_GMAIL_QUERY);
   const [syncStartDate, setSyncStartDate] = useState<string>("");
   const [syncResult, setSyncResult] = useState<GmailSyncResult | null>(null);
@@ -75,8 +85,9 @@ export const DashboardView = ({
     setConnectionStatus("connecting");
 
     try {
-      const token = await requestGmailAccessToken(getGoogleClientId());
-      setAccessToken(token);
+      const session = await requestGmailAccessToken(getGoogleClientId());
+      writeCachedGmailAccessSession(session);
+      setAccessToken(session.accessToken);
       setConnectionStatus("connected");
     } catch (error) {
       setConnectionStatus("disconnected");
@@ -120,6 +131,11 @@ export const DashboardView = ({
       );
       setSyncResult(result);
     } catch (error) {
+      if (getErrorMessage(error).includes("401")) {
+        removeCachedGmailAccessSession();
+        setAccessToken("");
+        setConnectionStatus("disconnected");
+      }
       setErrorMessage(getErrorMessage(error));
     } finally {
       setIsSyncing(false);
