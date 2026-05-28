@@ -31,6 +31,7 @@ export type AttentionSummary = {
 
 export const shouldAutoUpdateFromSignal = (signal: EmailSignal): boolean =>
   signal.status !== "Needs review" &&
+  signal.needsReview !== true &&
   signal.confidence >= AUTO_UPDATE_CONFIDENCE_THRESHOLD;
 
 export const getReviewQueueSignals = (

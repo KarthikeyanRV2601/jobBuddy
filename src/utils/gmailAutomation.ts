@@ -35,6 +35,8 @@ export const syncGmailAndBuildTracker = async (
         {
           subject: message.subject,
           body: getMessageAnalysisText(message),
+          from: message.from,
+          snippet: message.snippet,
           sourceMessageId: message.id,
           sourceThreadId: message.threadId,
           receivedAt,

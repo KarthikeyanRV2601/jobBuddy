@@ -11,6 +11,8 @@ export type SignalTone = "positive" | "negative" | "neutral" | "unknown";
 export type EmailInput = {
   readonly subject: string;
   readonly body: string;
+  readonly from?: string;
+  readonly snippet?: string;
   readonly sourceMessageId: string;
   readonly sourceThreadId: string;
   readonly receivedAt?: string;
@@ -22,6 +24,9 @@ export type EmailAnalysis = {
   readonly confidence: number;
   readonly keywords: readonly string[];
   readonly evidence?: readonly string[];
+  readonly needsReview?: boolean;
+  readonly competingStatus?: EmailSignalStatus;
+  readonly confidenceBand?: "low" | "medium" | "high";
   readonly insight?: string;
   readonly recommendation: string;
 };

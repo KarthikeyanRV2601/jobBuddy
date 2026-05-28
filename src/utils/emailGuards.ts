@@ -36,6 +36,8 @@ export const isEmailSignal = (value: unknown): value is EmailSignal => {
     typeof candidate.id === "string" &&
     typeof candidate.subject === "string" &&
     typeof candidate.body === "string" &&
+    (candidate.from === undefined || typeof candidate.from === "string") &&
+    (candidate.snippet === undefined || typeof candidate.snippet === "string") &&
     typeof candidate.sourceMessageId === "string" &&
     typeof candidate.sourceThreadId === "string" &&
     isEmailSignalStatus(candidate.status) &&
@@ -43,6 +45,14 @@ export const isEmailSignal = (value: unknown): value is EmailSignal => {
     typeof candidate.confidence === "number" &&
     isStringArray(candidate.keywords) &&
     (candidate.evidence === undefined || isStringArray(candidate.evidence)) &&
+    (candidate.needsReview === undefined ||
+      typeof candidate.needsReview === "boolean") &&
+    (candidate.competingStatus === undefined ||
+      isEmailSignalStatus(candidate.competingStatus)) &&
+    (candidate.confidenceBand === undefined ||
+      candidate.confidenceBand === "low" ||
+      candidate.confidenceBand === "medium" ||
+      candidate.confidenceBand === "high") &&
     (candidate.insight === undefined || typeof candidate.insight === "string") &&
     typeof candidate.recommendation === "string" &&
     typeof candidate.createdAt === "string"
