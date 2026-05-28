@@ -1,0 +1,6 @@
+<svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <rect fill="#f4f6f8" height="42" rx="10" width="42" x="3" y="3"/>
+  <text dominant-baseline="middle" fill="#060708" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="900" letter-spacing="-1" text-anchor="middle" x="24" y="24">JB</text>
+  <path d="M13 36h22" stroke="#68727e" stroke-linecap="round" stroke-width="2"/>
+  <circle cx="38" cy="10" fill="#35d399" r="3"/>
+</svg>

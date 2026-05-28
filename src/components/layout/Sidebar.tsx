@@ -1,6 +1,7 @@
 import type { ApplicationMetrics } from "../../types/application";
 import type { AppView } from "../../types/navigation";
 import { getNavItems, getPipelineMetrics } from "../../utils/navigation";
+import { JobBuddyLogo } from "./JobBuddyLogo";
 
 type SidebarProps = {
   readonly metrics: ApplicationMetrics;
@@ -11,7 +12,9 @@ type SidebarProps = {
 export const Sidebar = ({ metrics, view, onViewChange }: SidebarProps) => (
   <aside className="sidebar">
     <div className="brand">
-      <div className="brand-mark">JB</div>
+      <div className="brand-mark">
+        <JobBuddyLogo />
+      </div>
       <div>
         <h1>JobBuddy</h1>
         <p>Application command center</p>
