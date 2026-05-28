@@ -83,10 +83,10 @@ export const GmailSyncPanel = ({
         >
           {isSyncing ? "Syncing..." : "Sync Gmail"}
         </button>
-        {result === null ? null : (
-          <span className="meta-line">{getSyncSummary(result)}</span>
-        )}
       </div>
+      {result === null ? null : (
+        <span className="sync-result-line">{getSyncSummary(result)}</span>
+      )}
       <span className="meta-line sync-window-note">
         Blank uses last sync; first run scans last 180 days.
       </span>

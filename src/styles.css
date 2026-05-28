@@ -1563,6 +1563,20 @@ section[aria-labelledby="tracker-title"] .filter-card {
   min-width: 132px;
 }
 
+.sync-result-line {
+  grid-column: 1 / -1;
+  min-width: 0;
+  border: 1px solid #ddd6fe;
+  border-left: 3px solid var(--accent);
+  border-radius: 2px;
+  padding: 7px 9px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.25;
+}
+
 .sync-cache-line {
   grid-column: 1 / -1;
   margin: 0;
