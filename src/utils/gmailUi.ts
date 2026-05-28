@@ -10,8 +10,8 @@ export const getConnectionLabel = (
 
   const labels = {
     disconnected: "Connect your Google account with read-only Gmail access.",
-    connecting: "Waiting for Google sign-in...",
-    connected: "Gmail is connected for this browser session.",
+    connecting: "Recovering Gmail access...",
+    connected: "Gmail is remembered on this device for up to 7 days.",
   } as const satisfies Record<GmailConnectionStatus, string>;
 
   return labels[status];

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnalyticsHero } from "./components/AnalyticsHero";
 import { AttentionPanel } from "./components/AttentionPanel";
 import { DataControls } from "./components/DataControls";
@@ -12,6 +12,7 @@ import type { GmailSyncCache } from "../../types/sync";
 import { getDashboardAnalytics } from "../../utils/analytics";
 import { getErrorMessage } from "../../utils/errors";
 import {
+  readCachedGmailConnectionSession,
   readCachedGmailAccessSession,
   removeCachedGmailAccessSession,
   writeCachedGmailAccessSession,
@@ -22,6 +23,7 @@ import {
   hasGoogleClientId,
 } from "../../utils/gmailConfig";
 import { syncGmailAndBuildTracker } from "../../utils/gmailAutomation";
+import { recoverGmailAccessSession } from "../../utils/gmailSessionRecovery";
 import { requestGmailAccessToken } from "../../utils/googleIdentity";
 import {
   buildIncrementalGmailQuery,
@@ -54,12 +56,17 @@ export const DashboardView = ({
   signals,
 }: DashboardViewProps) => {
   const initialGmailSession = readCachedGmailAccessSession();
-  const [accessToken, setAccessToken] = useState<string>(
+  const initialGmailConnectionSession = readCachedGmailConnectionSession();
+  const [, setAccessToken] = useState<string>(
     initialGmailSession?.accessToken ?? "",
   );
   const [connectionStatus, setConnectionStatus] =
     useState<GmailConnectionStatus>(
-      initialGmailSession === null ? "disconnected" : "connected",
+      initialGmailSession !== null
+        ? "connected"
+        : initialGmailConnectionSession !== null
+          ? "connecting"
+          : "disconnected",
     );
   const [syncQuery, setSyncQuery] = useState<string>(DEFAULT_GMAIL_QUERY);
   const [syncStartDate, setSyncStartDate] = useState<string>("");
@@ -80,6 +87,44 @@ export const DashboardView = ({
     [attentionItems],
   );
 
+  useEffect(() => {
+    if (initialGmailSession !== null || initialGmailConnectionSession === null) {
+      return;
+    }
+
+    let isMounted = true;
+    setConnectionStatus("connecting");
+
+    recoverGmailAccessSession()
+      .then((session) => {
+        if (!isMounted) {
+          return;
+        }
+
+        if (session === null) {
+          setConnectionStatus("disconnected");
+          return;
+        }
+
+        setAccessToken(session.accessToken);
+        setConnectionStatus("connected");
+      })
+      .catch((error: unknown) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setConnectionStatus("disconnected");
+        setErrorMessage(
+          `Gmail session needs a fresh sign-in. ${getErrorMessage(error)}`,
+        );
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleConnect = async (): Promise<void> => {
     setErrorMessage("");
     setConnectionStatus("connecting");
@@ -96,11 +141,16 @@ export const DashboardView = ({
   };
 
   const handleSync = async (): Promise<void> => {
-    if (accessToken.length === 0) {
+    const session = await recoverGmailAccessSession();
+    if (session === null) {
       setErrorMessage("Connect Gmail before analyzing emails.");
+      setAccessToken("");
+      setConnectionStatus("disconnected");
       return;
     }
 
+    setAccessToken(session.accessToken);
+    setConnectionStatus("connected");
     setIsSyncing(true);
     setErrorMessage("");
 
@@ -112,7 +162,7 @@ export const DashboardView = ({
       );
       const result = await syncGmailAndBuildTracker(
         {
-          accessToken,
+          accessToken: session.accessToken,
           query,
         },
         applications,

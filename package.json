@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "screenshots": "node scripts/capture-readme-screenshots.mjs",
     "local:serve": "vite preview --host 127.0.0.1",
     "local:app": "npm run build && npm run local:serve -- --port 4173 --strictPort",
     "typecheck": "tsc -b"

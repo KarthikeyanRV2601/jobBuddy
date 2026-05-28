@@ -23,8 +23,9 @@ export const AttentionPanel = ({ items, summary }: AttentionPanelProps) => (
     </div>
     <div className="attention-list">
       {items.length === 0 ? (
-        <div className="empty-state">
-          No application mail needs action right now.
+        <div className="empty-state empty-state-quiet">
+          <strong>Attention queue is clear</strong>
+          <span>No application mail needs action right now.</span>
         </div>
       ) : (
         items.map((item) => {

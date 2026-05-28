@@ -23,24 +23,36 @@ export const AnalyticsHero = ({
   signalCount,
 }: AnalyticsHeroProps) => (
   <header className="operations-header">
-    <div>
-      <p className="eyebrow">Gmail operations</p>
+    <div className="hero-command">
+      <div className="hero-title-row">
+        <p className="eyebrow">Gmail operations</p>
+        <span className={`hero-status is-${connectionStatus}`}>
+          {connectionStatus === "connected"
+            ? "Gmail ready"
+            : connectionStatus === "connecting"
+              ? "Connecting"
+              : "Local mode"}
+        </span>
+      </div>
       <h2 id="dashboard-title">Dashboard</h2>
-      <p className="hero-copy">Gmail sync, attention queue, and tracker health in one workspace.</p>
+      <p className="hero-copy">
+        Gmail sync, attention queue, and tracker health in one workspace.
+      </p>
       {errorMessage.length > 0 ? <p className="error-text">{errorMessage}</p> : null}
       <div className="hero-actions">
         <button
-          className="primary-action"
+          className={`primary-action hero-connect-action is-${connectionStatus}`}
           disabled={!canConnect || connectionStatus === "connecting"}
           onClick={() => {
             void onConnect();
           }}
           type="button"
         >
+          <span aria-hidden="true" />
           {connectionStatus === "connected" ? "Gmail connected" : "Connect Gmail"}
         </button>
         <button
-          className="secondary-action"
+          className="secondary-action hero-sync-action"
           disabled={connectionStatus !== "connected" || isSyncing}
           onClick={() => {
             void onSync();
@@ -52,17 +64,20 @@ export const AnalyticsHero = ({
       </div>
     </div>
     <dl className="hero-metrics">
-      <div>
+      <div className="hero-metric-card">
         <dt>Total</dt>
         <dd>{analytics.total}</dd>
+        <span>applications</span>
       </div>
-      <div>
+      <div className="hero-metric-card">
         <dt>Ongoing</dt>
         <dd>{analytics.ongoing}</dd>
+        <span>active lanes</span>
       </div>
-      <div>
+      <div className="hero-metric-card">
         <dt>Email signals</dt>
         <dd>{signalCount}</dd>
+        <span>cached signals</span>
       </div>
     </dl>
   </header>

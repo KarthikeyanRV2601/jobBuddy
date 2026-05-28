@@ -43,7 +43,9 @@ export type GmailSyncResult = {
 
 export type GmailAccessSession = {
   readonly accessToken: string;
+  readonly connectedAt: string;
   readonly expiresAt: string;
+  readonly sessionExpiresAt: string;
 };
 
 export type GoogleTokenResponse = {

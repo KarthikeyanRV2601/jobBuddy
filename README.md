@@ -1,6 +1,6 @@
 # JobBuddy
 
-JobBuddy is a local-first React + TypeScript application for managing job search activity from one operational dashboard. It connects to Gmail with read-only access, scans application-related messages, classifies responses, builds a tracker automatically, and gives you a compact workspace for pipeline status, attention items, notes, and submitted skill context.
+JobBuddy is a local-first React + TypeScript application for managing job search activity from one operational dashboard. It connects to Gmail with read-only access, scans application-related messages, classifies responses, builds a tracker automatically, and gives you a compact black-and-silver workspace for pipeline status, attention items, notes, and submitted skill context.
 
 The goal is simple: reduce manual job-application bookkeeping and make Gmail-driven application tracking feel fast, clear, and trustworthy.
 
@@ -13,7 +13,7 @@ The goal is simple: reduce manual job-application bookkeeping and make Gmail-dri
 - Builds and updates a tracker automatically from synced emails.
 - Keeps a local pipeline view for active, interview, offer, and rejected applications.
 - Highlights recent application messages that need attention.
-- Stores tracker data, notes, skill context, and compact sync metadata locally in the browser.
+- Stores tracker data, notes, skill context, compact sync metadata, and the remembered Gmail connection locally in the browser.
 - Supports manual editing when automated classification needs correction.
 - Lets you save sticky-note style skill context for each application.
 - Runs as a Vite React app in development or as a local production preview.
@@ -22,13 +22,13 @@ The goal is simple: reduce manual job-application bookkeeping and make Gmail-dri
 
 ### Dashboard And Gmail Sync
 
-The dashboard is the main operating screen. It contains Gmail connection actions, the automated scan rule, local data controls, key focus metrics, application activity, and the attention queue.
+The dashboard is the main operating screen. It contains Gmail connection actions, the automated scan rule, local data controls, key focus metrics, application activity, and the attention queue. The current UI uses a strong black/silver theme, with color reserved for meaningful status signals.
 
 ![Dashboard sync panel](docs/screenshots/dashboard-empty-sync.png)
 
 ### Gmail Search Rule Editor
 
-The Gmail query is hidden by default to keep the dashboard clean. Use the edit button when you want to fine-tune what JobBuddy scans.
+The Gmail query is hidden by default to keep the dashboard clean. Use the edit button when you want to fine-tune what JobBuddy scans. The modal uses lightweight transform/opacity animation so it opens smoothly without expensive backdrop blur.
 
 ![Gmail query editor](docs/screenshots/gmail-query-editor.png)
 
@@ -83,6 +83,7 @@ jobbuddy.applications.v1
 jobbuddy.emailSignals.v1
 jobbuddy.notes.v1
 jobbuddy.gmailSyncCache.v1
+jobbuddy.gmailAccessSession.v1
 ```
 
 The app includes local clearing actions:
@@ -94,7 +95,13 @@ The app includes local clearing actions:
 
 JobBuddy uses a Gmail search query to pull relevant application-related email. The default query is broad and scans the last 180 days on the first run. After a successful sync, JobBuddy stores the last synced timestamp locally and can build incremental Gmail queries from that point.
 
-The app does not persist Gmail access tokens. The token is kept in memory for the current browser session.
+The app remembers the Gmail connection locally for up to 7 days. Google access tokens still expire quickly, usually around an hour, so JobBuddy attempts silent token renewal inside the 7-day remembered window. If Google revokes the session, expires it, or blocks silent renewal, click `Connect Gmail` again.
+
+The Gmail connection uses read-only scope:
+
+```text
+https://www.googleapis.com/auth/gmail.readonly
+```
 
 ## Gmail Setup
 
@@ -165,9 +172,27 @@ Keep the terminal window open while using the local app.
 npm run dev
 npm run build
 npm run typecheck
+npm run screenshots
 npm run local:serve
 npm run local:app
 ```
+
+## Updating Screenshots
+
+Start the app, then run the screenshot capture script:
+
+```bash
+npm run dev -- --host 127.0.0.1 --port 5173
+npm run screenshots
+```
+
+If you are using a different local URL, pass it with `JOBBUDDY_SCREENSHOT_URL`:
+
+```bash
+JOBBUDDY_SCREENSHOT_URL=http://127.0.0.1:5180/ npm run screenshots
+```
+
+The script uses local Chrome through the DevTools protocol and writes PNG files to `docs/screenshots/`.
 
 ## Current Product Scope
 
@@ -179,8 +204,9 @@ JobBuddy currently focuses on two primary screens:
 ## Notes On Privacy
 
 - Gmail access is read-only.
-- The access token is not saved to local storage.
-- Application data, notes, cached email signals, and sync metadata stay in browser local storage.
+- The remembered Gmail access session is stored in browser local storage for up to 7 days.
+- Application data, notes, cached email signals, sync metadata, and Gmail session metadata stay in browser local storage.
+- Use `Clear all local data` if you want to remove JobBuddy's local tracker data and cached sync data from the browser.
 - `.env` is ignored by git so your OAuth client ID is not committed.
 
 ## Verification

@@ -19,7 +19,10 @@ export const ApplicationList = ({
   if (applications.length === 0) {
     return (
       <section className="application-list" aria-live="polite">
-        <div className="empty-state">No applications match this view yet.</div>
+        <div className="empty-state empty-state-quiet">
+          <strong>No applications match this view</strong>
+          <span>Try another status filter or sync Gmail to populate the tracker.</span>
+        </div>
       </section>
     );
   }
@@ -93,17 +96,36 @@ export const ApplicationList = ({
                 <td>
                   <div className="table-actions">
                     {gmailUrl.length > 0 ? (
-                      <a href={gmailUrl} rel="noreferrer" target="_blank">
+                      <a
+                        aria-label={`Open email for ${application.company}`}
+                        href={gmailUrl}
+                        rel="noreferrer"
+                        target="_blank"
+                        title="Open source email"
+                      >
                         Email
                       </a>
                     ) : null}
-                    <button onClick={() => onOpenNotes(application.id)} type="button">
+                    <button
+                      onClick={() => onOpenNotes(application.id)}
+                      title="Save skill context"
+                      type="button"
+                    >
                       Skills
                     </button>
-                    <button onClick={() => onEdit(application.id)} type="button">
+                    <button
+                      onClick={() => onEdit(application.id)}
+                      title="Edit application"
+                      type="button"
+                    >
                       Edit
                     </button>
-                    <button onClick={() => onDelete(application.id)} type="button">
+                    <button
+                      className="danger-table-action"
+                      onClick={() => onDelete(application.id)}
+                      title="Delete application"
+                      type="button"
+                    >
                       Delete
                     </button>
                   </div>

@@ -10,6 +10,7 @@ const GOOGLE_IDENTITY_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 
 export const requestGmailAccessToken = async (
   clientId: string,
+  prompt: "consent" | "" = "consent",
 ): Promise<GmailAccessSession> => {
   await loadGoogleIdentityScript();
 
@@ -48,7 +49,7 @@ export const requestGmailAccessToken = async (
         },
       });
 
-    tokenClient.requestAccessToken({ prompt: "consent" });
+    tokenClient.requestAccessToken({ prompt });
   });
 };
 

@@ -31,6 +31,8 @@ export const GmailSyncPanel = ({
   const [isQueryEditorOpen, setIsQueryEditorOpen] = useState<boolean>(false);
   const [draftQuery, setDraftQuery] = useState<string>(query);
   const queryKeywordCount = getQueryKeywordCount(query);
+  const syncStateLabel = getSyncStateLabel(isConnected, isSyncing);
+  const syncStateClassName = getSyncStateClassName(isConnected, isSyncing);
 
   const handleOpenQueryEditor = (): void => {
     setDraftQuery(query);
@@ -47,7 +49,10 @@ export const GmailSyncPanel = ({
     <section className="gmail-control-panel gmail-sync-panel" aria-label="Gmail sync">
       <div className="query-summary">
         <div className="query-summary-main">
-          <span className="query-badge">Auto scan rule</span>
+          <div className="query-status-row">
+            <span className="query-badge">Auto scan rule</span>
+            <span className={syncStateClassName}>{syncStateLabel}</span>
+          </div>
           <strong title={query}>{getQueryPreview(query)}</strong>
           <div className="query-chip-list" aria-label="Search rule summary">
             <span>{queryKeywordCount} signals</span>
@@ -81,10 +86,12 @@ export const GmailSyncPanel = ({
           }}
           type="button"
         >
-          {isSyncing ? "Syncing..." : "Sync Gmail"}
+          {isSyncing ? "Scanning..." : "Sync Gmail"}
         </button>
       </div>
-      {result === null ? null : (
+      {isSyncing ? (
+        <span className="sync-progress-line">Scanning Gmail and updating the tracker...</span>
+      ) : result === null ? null : (
         <span className="sync-result-line">{getSyncSummary(result)}</span>
       )}
       <span className="meta-line sync-window-note">
@@ -142,4 +149,26 @@ export const GmailSyncPanel = ({
 const getQueryKeywordCount = (query: string): number => {
   const matches = query.match(/"[^"]+"|[\w-]+/g);
   return matches === null ? 0 : matches.length;
+};
+
+const getSyncStateLabel = (
+  isConnected: boolean,
+  isSyncing: boolean,
+): string => {
+  if (isSyncing) {
+    return "Scanning";
+  }
+
+  return isConnected ? "Gmail ready" : "Connect Gmail";
+};
+
+const getSyncStateClassName = (
+  isConnected: boolean,
+  isSyncing: boolean,
+): string => {
+  if (isSyncing) {
+    return "sync-state-chip is-syncing";
+  }
+
+  return isConnected ? "sync-state-chip is-ready" : "sync-state-chip";
 };
