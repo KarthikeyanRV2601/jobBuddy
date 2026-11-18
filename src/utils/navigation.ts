@@ -15,6 +15,7 @@ type PipelineMetric = {
 };
 
 export const getNavItems = (): readonly NavItem[] => [
+  { view: "discover", label: "Discover", icon: "↗" },
   {
     view: "dashboard",
     label: "Dashboard",

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { DiscoverView } from "./features/discovery/DiscoverView";
 import { Sidebar } from "./components/layout/Sidebar";
 import { DashboardView } from "./features/dashboard/DashboardView";
 import { TrackerView } from "./features/tracker/TrackerView";
@@ -92,6 +93,13 @@ export const App = () => {
     <div className="app-shell">
       <Sidebar metrics={metrics} view={view} onViewChange={setView} />
       <main className="workspace">
+        <section className="discovery-route" hidden={view !== "discover"} aria-label="Discover jobs">
+          <DiscoverView applications={applications} onSave={(application) => {
+            if (!applications.some(item => item.id === application.id || item.source === application.source)) {
+              setApplications([application, ...applications]);
+            }
+          }} />
+        </section>
         {view === "dashboard" ? (
           <DashboardView
             applications={applications}

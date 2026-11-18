@@ -1,1 +1,1 @@
-export type AppView = "dashboard" | "tracker";
+export type AppView = "dashboard" | "tracker" | "discover";

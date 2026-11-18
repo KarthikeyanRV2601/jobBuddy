@@ -1,6 +1,6 @@
 # JobBuddy
 
-JobBuddy is a local-first React + TypeScript application for managing job search activity from one operational dashboard. It connects to Gmail with read-only access, scans application-related messages, classifies responses, builds a tracker automatically, and gives you an energetic lime, lilac, and pink workspace for pipeline status, attention items, notes, and submitted skill context.
+JobBuddy is a local-first React + TypeScript application for discovering opportunities and managing your job search from one workspace. It connects to Gmail with read-only access, scans application-related messages, classifies responses, builds a tracker automatically, and gives you an energetic lime, lilac, and pink workspace for pipeline status, attention items, notes, and submitted skill context.
 
 The goal is simple: reduce manual job-application bookkeeping and make Gmail-driven application tracking feel fast, clear, and trustworthy.
 
@@ -8,6 +8,8 @@ The goal is simple: reduce manual job-application bookkeeping and make Gmail-dri
 
 ## What JobBuddy Does
 
+- Discovers roles across a 74-company India-focused directory, with separate Product and Startups categories, automatic retrieval for 44 companies, and official career-site links for 30 more.
+- Ranks loaded listings using your preferred role, skill mentions, and location/remote preferences, then saves selected roles to the tracker as Leads.
 - Syncs Gmail messages related to job applications using a configurable search rule.
 - Analyzes application emails for status signals such as applied, assessment, interview, offer, rejection, follow-up, and needs review.
 - Builds and updates a tracker automatically from synced emails.
@@ -20,7 +22,15 @@ The goal is simple: reduce manual job-application bookkeeping and make Gmail-dri
 
 ## Screenshots
 
-Screenshots show the redesigned UI using an empty workspace or built-in sample applications. No personal Gmail messages or account details are included.
+Screenshots show the redesigned UI using an empty workspace, sample applications, or generic discovery preferences. No personal Gmail messages or account details are included.
+
+### Discover And Company Directory
+
+Discover includes a compact directory of 74 companies: 46 established product companies and 28 startups/scaleups. Search names, switch categories, filter automatic integrations, and select companies without triggering requests. **Auto** retrieves listings inside JobBuddy; **Site** provides the official career destination. Search runs on button click, with progressive four-company batches and a stop control.
+
+<img src="docs/screenshots/company-directory-mobile.jpg" alt="Compact company directory showing Product and Startups categories, search, selection counts, and automatic versus career-site modes" width="390" />
+
+The [complete company directory](docs/company-directory.md) includes every configured company, career destination, research source, and retrieval mode.
 
 ### Dashboard And Gmail Sync
 
@@ -62,7 +72,7 @@ The dashboard adapts to phone screens with compact navigation and stacked panels
 
 - React 19
 - TypeScript with strict compiler settings
-- Vite
+- Vite with a local career-search endpoint for development and production preview
 - Local storage persistence
 - Gmail API integration through Google Identity Services
 - Utility-first architecture: components stay mostly presentational, and application logic lives in typed utilities
@@ -74,12 +84,16 @@ src/
   components/
     layout/              Shared shell and navigation
   features/
+    discovery/           Company directory, profile matching, job discovery
     dashboard/           Dashboard, analytics, attention queue, sync controls
     email/               Gmail sync UI and email analysis components
     notes/               Canvas-style notes workspace
     tracker/             CRM-style application tracker
   types/                 Strict domain types
   utils/                 Business logic, guards, Gmail parsing, storage, analytics
+server/                  Local search endpoint, career-site connectors, normalization
+shared/companies.json    Shared company directory and validated search configuration
+docs/company-directory.md  Research sources and per-company search coverage
 ```
 
 ## Local Storage Model
@@ -92,12 +106,32 @@ jobbuddy.emailSignals.v1
 jobbuddy.notes.v1
 jobbuddy.gmailSyncCache.v1
 jobbuddy.gmailAccessSession.v1
+jobbuddy.discoveryProfile.v1
 ```
 
 The app includes local clearing actions:
 
 - Clear email cache: removes stored email signals and Gmail sync metadata.
 - Clear tracker data: removes applications, email signals, notes, and sync metadata while keeping the remembered Gmail connection.
+
+## Discover Jobs
+
+Open **Discover**, enter a preferred role (or comma-separated skills), choose companies from the searchable **Product** and **Startups** directory, and click **Search N companies** (where N is your selection count). The full [company directory and research sources](docs/company-directory.md) lists all 74 entries and their retrieval modes. Opening the page or editing your profile never triggers a search. The role is the search keyword; if blank, the first skill is used.
+
+- Results include the company, title, location, available summary/date information, evidence-based match reasons, and original career-site link.
+- Skills and location/remote preferences rank the loaded results locally. They are preferences rather than hard filters. Experience is saved as a reference and must be checked against the full listing; the feeds do not consistently expose requirements.
+- The compact picker includes all 74 companies, category tabs (46 product / 28 startup-scaleup), name search, an automatic-search filter, selection counts, Select shown and Clear. Existing saved selections are preserved.
+- Automatic retrieval is configured for 44 companies; 30 have clearly labeled official career-site links. No background searches run when you browse or change the directory.
+- Large selections run in batches of four with progressive results and a Stop search control. Each automatic company has an independent More button; failures do not discard completed results. Microsoft/Eightfold load ten-result pages; other integrations use fifteen-result pages. Full public job-board feeds are cached and filtered locally on the server before paging.
+- **Save to tracker** creates a Lead with the original listing URL and skill context. Saving the same listing again does not duplicate it.
+- The role keyword is sent through the local endpoint to the selected companies. Skills, experience, and location preferences stay in browser storage under `jobbuddy.discoveryProfile.v1`.
+- Successful search pages are cached in server memory for five minutes, with fetched/cached timestamps shown. Nothing runs on a schedule.
+
+The `/api/discover` endpoint runs in the same Vite process in development and local production preview. Use `npm run dev` or `npm run local:app`; serving `dist/` through a static-only host does not provide career search. No new API key is required. The integration reads public career-site search responses; if a site's format changes, the page reports that company's error and keeps its direct search link available.
+
+The directory is India-focused, with compensation-research links rather than guaranteed salary figures. Product/Startup categories are editorial groupings; startup includes growth-stage scaleups. Confirm India eligibility, especially for remote roles, in each original listing.
+
+Run its regression checks with `node scripts/test-discovery.mjs` and `node scripts/test-company-directory.mjs`.
 
 ## Gmail Sync Behavior
 
@@ -210,8 +244,9 @@ The script uses local Chrome through the DevTools protocol and writes PNG files 
 
 ## Current Product Scope
 
-JobBuddy currently focuses on two primary screens:
+JobBuddy currently focuses on three primary screens:
 
+- Discover: button-driven career-site search, local profile matching, per-company pagination, and saving roles as Leads.
 - Dashboard: Gmail sync, scan rule, attention queue, local data controls, and application activity.
 - Tracker: CRM-style application table with filters, search, email links, editing, and skill notes.
 
@@ -230,6 +265,8 @@ Before pushing this version, the app was verified with:
 ```bash
 npm run build
 node scripts/test-gmail-sync.mjs
+node scripts/test-discovery.mjs
+node scripts/test-company-directory.mjs
 git diff --check
 ```
 
