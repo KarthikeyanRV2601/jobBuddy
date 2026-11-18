@@ -73,24 +73,39 @@ export const filterApplications = (
 ): readonly Application[] => {
   const query = filters.query.toLowerCase();
 
-  return applications.filter((application) => {
-    const searchable = toSearchText([
-      application.company,
-      application.role,
-      application.source,
-      application.status,
-      application.nextAction,
-      application.notes,
-      application.skillContext,
-    ]);
+  return sortApplicationsByRecentActivity(
+    applications.filter((application) => {
+      const searchable = toSearchText([
+        application.company,
+        application.role,
+        application.source,
+        application.status,
+        application.nextAction,
+        application.notes,
+        application.skillContext,
+      ]);
 
-    const matchesQuery = searchable.includes(query);
-    const matchesStatus =
-      filters.status === "All" || application.status === filters.status;
+      const matchesQuery = searchable.includes(query);
+      const matchesStatus =
+        filters.status === "All" || application.status === filters.status;
 
-    return matchesQuery && matchesStatus;
-  });
+      return matchesQuery && matchesStatus;
+    }),
+  );
 };
+
+export const sortApplicationsByRecentActivity = (
+  applications: readonly Application[],
+): readonly Application[] =>
+  [...applications].sort((left, right) => {
+    const activityDelta =
+      getApplicationActivityTime(right) - getApplicationActivityTime(left);
+    if (activityDelta !== 0) {
+      return activityDelta;
+    }
+
+    return left.company.localeCompare(right.company);
+  });
 
 export const getSampleApplications = (nowIso: string): readonly Application[] => [
   createApplication(
@@ -133,3 +148,13 @@ const countByStatuses = (
 ): number =>
   applications.filter((application) => statuses.includes(application.status))
     .length;
+
+const getApplicationActivityTime = (application: Application): number => {
+  const updatedAt = Date.parse(application.updatedAt);
+  if (!Number.isNaN(updatedAt)) {
+    return updatedAt;
+  }
+
+  const createdAt = Date.parse(application.createdAt);
+  return Number.isNaN(createdAt) ? 0 : createdAt;
+};

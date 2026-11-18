@@ -26,7 +26,7 @@ export const EmailHistory = ({
           onClick={onClearAllLocalData}
           type="button"
         >
-          Clear all local data
+          Clear tracker data
         </button>
       </div>
     </div>

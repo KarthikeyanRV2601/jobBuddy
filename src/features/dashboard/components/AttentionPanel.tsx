@@ -14,7 +14,8 @@ export const AttentionPanel = ({ items, summary }: AttentionPanelProps) => (
   <aside className="dashboard-panel attention-panel" aria-label="Needs attention">
     <div className="section-heading compact-heading">
       <div>
-        <h3>Needs attention</h3>
+        <p className="eyebrow">THE NEXT MOVE</p>
+        <h3>Your move ↗</h3>
         <span className="meta-line">
           {items.length} recent {items.length === 1 ? "message" : "messages"}
         </span>

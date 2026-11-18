@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GmailConnectionPanel } from "./components/GmailConnectionPanel";
 import { EmailHistory } from "./components/EmailHistory";
 import { GmailSyncPanel } from "./components/GmailSyncPanel";
@@ -47,6 +47,7 @@ export const GmailView = ({
   signals,
   onSignalsChange,
 }: GmailViewProps) => {
+  const syncInFlight = useRef(false);
   const initialGmailSession = readCachedGmailAccessSession();
   const initialGmailConnectionSession = readCachedGmailConnectionSession();
   const [, setAccessToken] = useState<string>(
@@ -124,20 +125,22 @@ export const GmailView = ({
   };
 
   const handleSync = async (): Promise<void> => {
-    const session = await recoverGmailAccessSession();
-    if (session === null) {
-      setErrorMessage("Connect Gmail before syncing messages.");
-      setAccessToken("");
-      setConnectionStatus("disconnected");
-      return;
-    }
-
-    setAccessToken(session.accessToken);
-    setConnectionStatus("connected");
+    if (syncInFlight.current) return;
+    syncInFlight.current = true;
     setIsSyncing(true);
     setErrorMessage("");
+    setSyncResult(null);
 
     try {
+      const session = await recoverGmailAccessSession();
+      if (session === null) {
+        setErrorMessage("Connect Gmail before syncing messages.");
+        setAccessToken("");
+        setConnectionStatus("disconnected");
+        return;
+      }
+      setAccessToken(session.accessToken);
+      setConnectionStatus("connected");
       const query = buildIncrementalGmailQuery(
         syncQuery,
         gmailSyncCache,
@@ -154,14 +157,16 @@ export const GmailView = ({
 
       onApplicationsChange(result.applications);
       onSignalsChange(result.signals);
-      onGmailSyncCacheChange(
-        createGmailSyncCache(
-          result.syncedAt,
-          syncQuery,
-          result.matchedCount,
-          result.signals.length,
-        ),
-      );
+      if (result.complete) {
+        onGmailSyncCacheChange(
+          createGmailSyncCache(
+            result.syncedAt,
+            syncQuery,
+            result.matchedCount,
+            result.signals.length,
+          ),
+        );
+      }
       setSyncResult(result);
     } catch (error) {
       if (getErrorMessage(error).includes("401")) {
@@ -171,6 +176,7 @@ export const GmailView = ({
       }
       setErrorMessage(getErrorMessage(error));
     } finally {
+      syncInFlight.current = false;
       setIsSyncing(false);
     }
   };

@@ -6,7 +6,8 @@ type RelevanceRule = {
 };
 
 const relevanceRules = [
-  { weight: 10, pattern: /\b(?:thank you for applying|application received|your application|job application)\b/i },
+  { weight: 10, pattern: /\b(?:thank you for applying|application received|application submitted|successfully submitted|your application|job application)\b/i },
+  { weight: 9, pattern: /\b(?:indeed application|indeed apply|indeedapply)\b/i },
   { weight: 10, pattern: /\b(?:not moving forward|not selected|after careful consideration|other candidates|no longer under consideration)\b/i },
   { weight: 9, pattern: /\b(?:schedule|invite|invited|availability).{0,40}\b(?:interview|screen|call|conversation)\b/i },
   { weight: 9, pattern: /\b(?:offer letter|extend an offer|pleased to offer|compensation package)\b/i },

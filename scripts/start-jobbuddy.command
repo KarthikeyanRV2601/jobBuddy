@@ -3,8 +3,8 @@ set -e
 
 cd "$(dirname "$0")/.."
 
-PORT="${JOBBUDDY_PORT:-4173}"
-URL="http://127.0.0.1:${PORT}/"
+PORT="${JOBBUDDY_PORT:-5173}"
+URL="http://localhost:${PORT}/"
 
 echo "Building JobBuddy..."
 npm run build

@@ -21,7 +21,7 @@ export const DataControls = ({
         onClick={onClearAllLocalData}
         type="button"
       >
-        Clear all local data
+        Clear tracker data
       </button>
     </div>
   </section>

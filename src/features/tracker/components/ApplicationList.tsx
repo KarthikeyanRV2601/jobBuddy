@@ -1,5 +1,5 @@
 import type { Application } from "../../../types/application";
-import { formatDate } from "../../../utils/dateFormat";
+import { formatDate, formatDateTime } from "../../../utils/dateFormat";
 import { getGmailUrl } from "../../../utils/gmailLinks";
 import { getStatusPillClassName } from "../../../utils/statusClassNames";
 
@@ -35,7 +35,7 @@ export const ApplicationList = ({
             <th>Company</th>
             <th>Role</th>
             <th>Status</th>
-            <th>Next action</th>
+            <th>Email date</th>
             <th>Source</th>
             <th>Deadline</th>
             <th>Skill context</th>
@@ -45,6 +45,7 @@ export const ApplicationList = ({
         <tbody>
           {applications.map((application) => {
             const gmailUrl = getGmailUrl(application);
+            const emailDate = getApplicationEmailDate(application);
             return (
               <tr key={application.id}>
                 <td>
@@ -63,11 +64,8 @@ export const ApplicationList = ({
                   </span>
                 </td>
                 <td>
-                  <span
-                    className="cell-clamp"
-                    title={application.nextAction || "No next action"}
-                  >
-                    {application.nextAction || "No next action"}
+                  <span className="cell-truncate" title={emailDate}>
+                    {emailDate}
                   </span>
                 </td>
                 <td>
@@ -137,4 +135,14 @@ export const ApplicationList = ({
       </table>
     </section>
   );
+};
+
+const getApplicationEmailDate = (application: Application): string => {
+  const dateValue = application.updatedAt || application.createdAt;
+  const parsedTime = Date.parse(dateValue);
+  if (Number.isNaN(parsedTime)) {
+    return "Not captured";
+  }
+
+  return formatDateTime(dateValue);
 };

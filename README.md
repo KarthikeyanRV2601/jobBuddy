@@ -1,6 +1,6 @@
 # JobBuddy
 
-JobBuddy is a local-first React + TypeScript application for managing job search activity from one operational dashboard. It connects to Gmail with read-only access, scans application-related messages, classifies responses, builds a tracker automatically, and gives you a compact black-and-silver workspace for pipeline status, attention items, notes, and submitted skill context.
+JobBuddy is a local-first React + TypeScript application for managing job search activity from one operational dashboard. It connects to Gmail with read-only access, scans application-related messages, classifies responses, builds a tracker automatically, and gives you an energetic lime, lilac, and pink workspace for pipeline status, attention items, notes, and submitted skill context.
 
 The goal is simple: reduce manual job-application bookkeeping and make Gmail-driven application tracking feel fast, clear, and trustworthy.
 
@@ -20,9 +20,11 @@ The goal is simple: reduce manual job-application bookkeeping and make Gmail-dri
 
 ## Screenshots
 
+Screenshots show the redesigned UI using an empty workspace or built-in sample applications. No personal Gmail messages or account details are included.
+
 ### Dashboard And Gmail Sync
 
-The dashboard is the main operating screen. It contains Gmail connection actions, the automated scan rule, local data controls, key focus metrics, application activity, and the attention queue. The current UI uses a strong black/silver theme, with color reserved for meaningful status signals.
+The dashboard is the main operating screen. It contains Gmail connection actions, the automated scan rule, local data controls, key focus metrics, application activity, and the attention queue. The redesigned UI pairs a cream canvas and dark sidebar with bold typography, lilac panels, lime actions, and pink metric cards. Layouts adapt to desktop and mobile screens.
 
 ![Dashboard sync panel](docs/screenshots/dashboard-empty-sync.png)
 
@@ -49,6 +51,12 @@ Each application can have a sticky-note style skill context entry. This is usefu
 Tracker rows can be edited through an in-place modal instead of a permanent manual form. This keeps the tracker focused on review and correction rather than data entry.
 
 ![Application edit popup](docs/screenshots/application-edit-popup.png)
+
+### Mobile Dashboard
+
+The dashboard adapts to phone screens with compact navigation and stacked panels. The tracker keeps its table inside a horizontally scrollable panel.
+
+<img src="docs/screenshots/dashboard-mobile.png" alt="JobBuddy mobile dashboard with sample application counts" width="390" />
 
 ## Tech Stack
 
@@ -89,11 +97,15 @@ jobbuddy.gmailAccessSession.v1
 The app includes local clearing actions:
 
 - Clear email cache: removes stored email signals and Gmail sync metadata.
-- Clear all local data: removes applications, email signals, notes, and sync metadata.
+- Clear tracker data: removes applications, email signals, notes, and sync metadata while keeping the remembered Gmail connection.
 
 ## Gmail Sync Behavior
 
-JobBuddy uses a Gmail search query to pull relevant application-related email. The default query is broad and scans the last 180 days on the first run. After a successful sync, JobBuddy stores the last synced timestamp locally and can build incremental Gmail queries from that point.
+JobBuddy uses a Gmail search query to pull relevant application-related email. The default query is broad and scans the last 180 days on the first run. After a complete sync, JobBuddy stores the scan start timestamp locally and can build incremental Gmail queries from that point.
+
+Search results are processed one page at a time, with 50 results per page and at most three concurrent message downloads. Transient network failures, Gmail 429 responses, rate-limit 403 responses, and supported server errors use bounded retries with exponential backoff and shared cooldowns. The client respects `Retry-After` and stops the scan when rate limits persist.
+
+A failed message or later search page does not discard successful results. Partial syncs save successfully analyzed application emails, show failed or deferred message counts, and retain the previous checkpoint. Run sync again to retry; already cached application emails are skipped. Gmail profile lookup failures do not block message processing.
 
 The app remembers the Gmail connection locally for up to 7 days. Google access tokens still expire quickly, usually around an hour, so JobBuddy attempts silent token renewal inside the 7-day remembered window. If Google revokes the session, expires it, or blocks silent renewal, click `Connect Gmail` again.
 
@@ -158,11 +170,13 @@ Or double-click the launcher on macOS:
 scripts/start-jobbuddy.command
 ```
 
-The local app runs at:
+The `npm run local:app` command runs at:
 
 ```text
 http://127.0.0.1:4173/
 ```
+
+The macOS launcher defaults to `http://localhost:5173/` so it uses the same browser storage as the regular development URL. Stop the development server before using the launcher on that port, or set `JOBBUDDY_PORT` to another free port.
 
 Keep the terminal window open while using the local app.
 
@@ -206,7 +220,7 @@ JobBuddy currently focuses on two primary screens:
 - Gmail access is read-only.
 - The remembered Gmail access session is stored in browser local storage for up to 7 days.
 - Application data, notes, cached email signals, sync metadata, and Gmail session metadata stay in browser local storage.
-- Use `Clear all local data` if you want to remove JobBuddy's local tracker data and cached sync data from the browser.
+- Use `Clear tracker data` if you want to remove JobBuddy's local tracker data and cached sync data from the browser while staying connected to Gmail.
 - `.env` is ignored by git so your OAuth client ID is not committed.
 
 ## Verification
@@ -215,7 +229,8 @@ Before pushing this version, the app was verified with:
 
 ```bash
 npm run build
-./node_modules/.bin/tsc -p tsconfig.app.json
+node scripts/test-gmail-sync.mjs
+git diff --check
 ```
 
 ## Roadmap
@@ -224,5 +239,5 @@ npm run build
 - Add richer follow-up and assessment action detection.
 - Add export/import for tracker and notes.
 - Add optional reminder automation for follow-ups.
-- Add more resilient Gmail sync reporting and conflict handling.
-- Add responsive improvements for smaller screens.
+- Add richer Gmail sync progress and conflict handling.
+- Continue refining mobile tracker interactions.

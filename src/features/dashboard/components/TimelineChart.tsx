@@ -11,7 +11,9 @@ export const TimelineChart = ({ applications }: TimelineChartProps) => {
   return (
     <section className="dashboard-panel timeline-panel">
       <div className="section-heading compact-heading">
-        <h3>{calendar.total} applications in the last year</h3>
+        <div><p className="eyebrow">CONSISTENCY LOOKS GOOD ON YOU</p>
+          <h3>The effort adds up.</h3>
+          <span className="meta-line">{calendar.total} applications in the last year</span></div>
       </div>
       <div className="contribution-chart" aria-label="Applications in the last year">
         <div className="contribution-months" aria-hidden="true">

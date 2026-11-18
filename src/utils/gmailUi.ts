@@ -20,7 +20,9 @@ export const getConnectionLabel = (
 export const getSyncSummary = (result: GmailSyncResult): string => {
   const account =
     result.profile === null ? "Gmail" : result.profile.emailAddress;
-  return `${account}: fetched ${result.fetchedCount}, analyzed ${result.matchedCount} application emails.`;
+  const summary = `${account}: fetched ${result.fetchedCount} messages, saved ${result.matchedCount} application emails; ${result.skippedCount} already cached.`;
+  if (result.complete) return `Sync complete. ${summary}`;
+  return `Partial sync. ${summary} ${result.failedCount} messages failed or were deferred. Successful results are saved. Sync again to retry; the previous checkpoint is unchanged. ${result.warnings.join(" ")}`;
 };
 
 export const getQueryPreview = (query: string): string => {

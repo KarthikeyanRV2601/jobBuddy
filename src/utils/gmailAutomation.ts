@@ -22,11 +22,15 @@ export const syncGmailAndBuildTracker = async (
   existingApplications: readonly Application[],
   existingSignals: readonly EmailSignal[],
 ): Promise<GmailAutomationResult> => {
-  const [profile, fetchedMessages] = await Promise.all([
-    fetchGmailProfile(options.accessToken),
-    fetchGmailMessages(options),
+  const syncedAt = new Date().toISOString();
+  const [profile, fetched] = await Promise.all([
+    fetchGmailProfile(options.accessToken).catch(() => null),
+    fetchGmailMessages({
+      ...options,
+      knownMessageIds: existingSignals.map((signal) => signal.sourceMessageId).filter(Boolean),
+    }),
   ]);
-  const messages = fetchedMessages.filter(isApplicationRelatedMessage);
+  const messages = fetched.messages.filter(isApplicationRelatedMessage);
   const nowIso = new Date().toISOString();
   const signals = messages.map((message) => {
     const receivedAt = getMessageDateIso(message, nowIso);
@@ -72,10 +76,14 @@ export const syncGmailAndBuildTracker = async (
     profile,
     messages,
     signals: nextSignals,
-    fetchedCount: fetchedMessages.length,
+    fetchedCount: fetched.messages.length,
     matchedCount: messages.length,
     updatedApplicationsCount: applications.length - existingApplications.length,
-    syncedAt: nowIso,
+    syncedAt,
+    complete: fetched.complete,
+    failedCount: fetched.failedCount,
+    skippedCount: fetched.skippedCount,
+    warnings: fetched.warnings,
     applications,
   };
 };

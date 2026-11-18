@@ -25,7 +25,7 @@ export const AnalyticsHero = ({
   <header className="operations-header">
     <div className="hero-command">
       <div className="hero-title-row">
-        <p className="eyebrow">Gmail operations</p>
+        <p className="eyebrow">YOUR CAREER, IN MOTION</p>
         <span className={`hero-status is-${connectionStatus}`}>
           {connectionStatus === "connected"
             ? "Gmail ready"
@@ -34,9 +34,10 @@ export const AnalyticsHero = ({
               : "Local mode"}
         </span>
       </div>
-      <h2 id="dashboard-title">Dashboard</h2>
+      <h2 id="dashboard-title">Next stop.<br /><span>Your next big thing.</span></h2>
+      <span className="hero-sticker" aria-hidden="true">✳</span>
       <p className="hero-copy">
-        Gmail sync, attention queue, and tracker health in one workspace.
+        Less inbox chaos. More main-character career moves.
       </p>
       {errorMessage.length > 0 ? <p className="error-text">{errorMessage}</p> : null}
       <div className="hero-actions">
@@ -63,21 +64,21 @@ export const AnalyticsHero = ({
         </button>
       </div>
     </div>
-    <dl className="hero-metrics">
+    <dl className="hero-metrics" aria-label="Your job search at a glance">
       <div className="hero-metric-card">
-        <dt>Total</dt>
+        <dt>Shots taken ↗</dt>
         <dd>{analytics.total}</dd>
         <span>applications</span>
       </div>
       <div className="hero-metric-card">
-        <dt>Ongoing</dt>
+        <dt>In the works</dt>
         <dd>{analytics.ongoing}</dd>
-        <span>active lanes</span>
+        <span>active opportunities</span>
       </div>
       <div className="hero-metric-card">
-        <dt>Email signals</dt>
+        <dt>Inbox intel</dt>
         <dd>{signalCount}</dd>
-        <span>cached signals</span>
+        <span>emails, decoded</span>
       </div>
     </dl>
   </header>

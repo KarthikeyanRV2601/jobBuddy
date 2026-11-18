@@ -47,6 +47,7 @@ export const GmailSyncPanel = ({
 
   return (
     <section className="gmail-control-panel gmail-sync-panel" aria-label="Gmail sync">
+      <div className="sync-panel-heading"><div><p className="eyebrow">YOUR INBOX, BUT SMARTER</p><h3>Let’s catch you up.</h3></div><span aria-hidden="true">↻</span></div>
       <div className="query-summary">
         <div className="query-summary-main">
           <div className="query-status-row">
@@ -92,7 +93,7 @@ export const GmailSyncPanel = ({
       {isSyncing ? (
         <span className="sync-progress-line">Scanning Gmail and updating the tracker...</span>
       ) : result === null ? null : (
-        <span className="sync-result-line">{getSyncSummary(result)}</span>
+        <span className="sync-result-line" role="status">{getSyncSummary(result)}</span>
       )}
       <span className="meta-line sync-window-note">
         Blank uses last sync; first run scans last 180 days.

@@ -17,13 +17,14 @@ export const Sidebar = ({ metrics, view, onViewChange }: SidebarProps) => (
       </div>
       <div>
         <h1>JobBuddy</h1>
-        <p>Application command center</p>
+        <p>Big moves start here.</p>
       </div>
     </div>
 
     <nav className="nav-tabs" aria-label="Main views">
       {getNavItems().map((item) => (
         <button
+          aria-current={view === item.view ? "page" : undefined}
           className={`nav-tab${view === item.view ? " is-active" : ""}`}
           key={item.view}
           onClick={() => onViewChange(item.view)}
@@ -37,7 +38,7 @@ export const Sidebar = ({ metrics, view, onViewChange }: SidebarProps) => (
 
     <section className="summary-panel" aria-label="Application summary">
       <div className="summary-heading">
-        <h2>Pipeline</h2>
+        <h2>Your momentum</h2>
         <span>Status</span>
       </div>
       <dl className="metrics">
@@ -54,5 +55,10 @@ export const Sidebar = ({ metrics, view, onViewChange }: SidebarProps) => (
         ))}
       </dl>
     </section>
+    <div className="sidebar-pep-talk">
+      <span aria-hidden="true">✳</span>
+      <p>Big dreams.<br />Small steps.<br /><strong>You’ve got this.</strong></p>
+      <span className="local-first-label">LOCAL FIRST · ALWAYS YOURS</span>
+    </div>
   </aside>
 );

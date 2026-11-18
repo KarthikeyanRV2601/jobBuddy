@@ -29,6 +29,15 @@ export type GmailMessage = {
 export type GmailSyncOptions = {
   readonly accessToken: string;
   readonly query: string;
+  readonly knownMessageIds?: readonly string[];
+};
+
+export type GmailFetchResult = {
+  readonly messages: readonly GmailMessage[];
+  readonly failedCount: number;
+  readonly skippedCount: number;
+  readonly complete: boolean;
+  readonly warnings: readonly string[];
 };
 
 export type GmailSyncResult = {
@@ -39,6 +48,10 @@ export type GmailSyncResult = {
   readonly matchedCount: number;
   readonly updatedApplicationsCount: number;
   readonly syncedAt: string;
+  readonly complete: boolean;
+  readonly failedCount: number;
+  readonly skippedCount: number;
+  readonly warnings: readonly string[];
 };
 
 export type GmailAccessSession = {

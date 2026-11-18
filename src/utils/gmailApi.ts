@@ -1,5 +1,6 @@
 import type {
   GmailMessage,
+  GmailFetchResult,
   GmailMessageHeaderName,
   GmailProfile,
   GmailSyncOptions,
@@ -59,53 +60,91 @@ export const fetchGmailProfile = async (
   };
 };
 
+// Fetch and drain one search page before asking Gmail for the next page.
 export const fetchGmailMessages = async (
   options: GmailSyncOptions,
-): Promise<readonly GmailMessage[]> => {
-  const messageRefs = await fetchGmailMessageRefs(options);
-  const messages = await Promise.all(
-    messageRefs.map((message) =>
-      fetchGmailMessage(options.accessToken, message.id),
-    ),
-  );
-
-  return messages;
-};
-
-const fetchGmailMessageRefs = async (
-  options: GmailSyncOptions,
-): Promise<readonly { readonly id: string; readonly threadId: string }[]> => {
-  const messageRefs: { readonly id: string; readonly threadId: string }[] = [];
+): Promise<GmailFetchResult> => {
+  const request = createGmailFetch();
+  const messages: GmailMessage[] = [];
+  const warnings = new Set<string>();
+  const knownIds = new Set(options.knownMessageIds ?? []);
+  const seenIds = new Set<string>();
+  const seenTokens = new Set<string>();
+  let failedCount = 0;
+  let skippedCount = 0;
   let nextPageToken = "";
+  let complete = true;
+  let stopped = false;
 
   do {
     const listUrl = new URL(`${GMAIL_API_BASE_URL}/messages`);
     listUrl.searchParams.set("q", options.query);
-    listUrl.searchParams.set("maxResults", "500");
-    if (nextPageToken.length > 0) {
-      listUrl.searchParams.set("pageToken", nextPageToken);
+    listUrl.searchParams.set("maxResults", "50");
+    if (nextPageToken) listUrl.searchParams.set("pageToken", nextPageToken);
+    let page: GmailListResponse;
+    try {
+      page = await request<GmailListResponse>(listUrl.toString(), options.accessToken);
+    } catch (error) {
+      if (messages.length === 0 && skippedCount === 0) throw error;
+      warnings.add(errorMessage(error));
+      complete = false;
+      break;
     }
 
-    const listResponse = await gmailFetch<GmailListResponse>(
-      listUrl.toString(),
-      options.accessToken,
-    );
+    const refs = (page.messages ?? []).filter(({ id }) => {
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      if (knownIds.has(id)) {
+        skippedCount += 1;
+        return false;
+      }
+      return true;
+    });
+    // Batches cap concurrency, preserve search order, and let all in-flight work settle.
+    for (let offset = 0; offset < refs.length; offset += 3) {
+      const batch = refs.slice(offset, offset + 3);
+      const results = await Promise.allSettled(batch.map(({ id }) =>
+        fetchGmailMessage(options.accessToken, id, request),
+      ));
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          messages.push(result.value);
+        } else {
+          failedCount += 1;
+          complete = false;
+          warnings.add(errorMessage(result.reason));
+          if (result.reason instanceof GmailApiError && result.reason.stopScan) {
+            stopped = true;
+          }
+        }
+      }
+      if (stopped) {
+        failedCount += refs.length - offset - batch.length;
+        break;
+      }
+    }
+    if (stopped) break;
+    nextPageToken = page.nextPageToken ?? "";
+    if (nextPageToken && seenTokens.has(nextPageToken)) {
+      complete = false;
+      warnings.add("Gmail repeated a search page. Retry sync to finish the scan.");
+      break;
+    }
+    seenTokens.add(nextPageToken);
+  } while (nextPageToken);
 
-    messageRefs.push(...(listResponse.messages ?? []));
-    nextPageToken = listResponse.nextPageToken ?? "";
-  } while (nextPageToken.length > 0);
-
-  return messageRefs;
+  return { messages, failedCount, skippedCount, complete, warnings: [...warnings] };
 };
 
 const fetchGmailMessage = async (
   accessToken: string,
   messageId: string,
+  request = gmailFetch,
 ): Promise<GmailMessage> => {
   const messageUrl = new URL(`${GMAIL_API_BASE_URL}/messages/${messageId}`);
   messageUrl.searchParams.set("format", "full");
 
-  const response = await gmailFetch<GmailMessageResponse>(
+  const response = await request<GmailMessageResponse>(
     messageUrl.toString(),
     accessToken,
   );
@@ -122,22 +161,62 @@ const fetchGmailMessage = async (
   };
 };
 
-const gmailFetch = async <Response>(
-  url: string,
-  accessToken: string,
-): Promise<Response> => {
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Gmail API request failed with ${response.status}.`);
+class GmailApiError extends Error {
+  constructor(message: string, readonly stopScan: boolean) {
+    super(message);
   }
+}
 
-  return (await response.json()) as Response;
+const errorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : "Gmail request failed.";
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+// Each scan shares its cooldown across all workers; no token is logged or persisted here.
+const createGmailFetch = () => {
+  let cooldownUntil = 0;
+  return async <Response>(url: string, accessToken: string): Promise<Response> => {
+    for (let attempt = 0; ; attempt += 1) {
+      while (cooldownUntil > Date.now()) await wait(cooldownUntil - Date.now());
+      let response: globalThis.Response;
+      try {
+        response = await fetch(url, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          signal: AbortSignal.timeout(30_000),
+        });
+      } catch (error) {
+        if (attempt >= 3) throw error;
+        await wait(1000 * 2 ** attempt + Math.random() * 500);
+        continue;
+      }
+      if (response.ok) return (await response.json()) as Response;
+      const body = await response.json().catch(() => null) as {
+        error?: { errors?: { reason?: string }[] };
+      } | null;
+      const reasons = body?.error?.errors?.map((item) => item.reason ?? "") ?? [];
+      const rateLimited = response.status === 429 ||
+        (response.status === 403 && reasons.some((reason) =>
+          ["rateLimitExceeded", "userRateLimitExceeded"].includes(reason)));
+      const retryable = rateLimited || [500, 502, 503, 504].includes(response.status);
+      const retryAfter = response.headers.get("Retry-After");
+      const seconds = retryAfter === null ? NaN : Number(retryAfter);
+      const retryAt = retryAfter === null ? NaN : Date.parse(retryAfter);
+      const retryDelay = Number.isFinite(seconds) ? seconds * 1000 :
+        Number.isFinite(retryAt) ? Math.max(0, retryAt - Date.now()) : 0;
+      const message = `Gmail API request failed with ${response.status}${reasons.length ? ` (${reasons.join(", ")})` : ""}.`;
+      // Long server cooldowns are reported rather than ignored or retried early.
+      if (!retryable || attempt >= 3 || retryDelay > 60_000) {
+        throw new GmailApiError(message, rateLimited || response.status === 401);
+      }
+      const delay = Math.max(retryDelay, 1000 * 2 ** attempt + Math.random() * 500);
+      cooldownUntil = Math.max(cooldownUntil, Date.now() + delay);
+    }
+  };
 };
+
+const gmailFetch = <Response>(url: string, accessToken: string): Promise<Response> =>
+  createGmailFetch()<Response>(url, accessToken);
 
 const getHeaderValue = (
   headers: readonly GmailHeader[] | undefined,

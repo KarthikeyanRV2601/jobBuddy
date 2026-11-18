@@ -98,8 +98,9 @@ export const TrackerView = ({
     <section aria-labelledby="tracker-title">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Lead and application tracker</p>
-          <h2 id="tracker-title">Tracker</h2>
+          <p className="eyebrow">THE OPPORTUNITY ROSTER</p>
+          <h2 id="tracker-title">Big moves. All in one place.</h2>
+          <p className="tracker-intro">{applications.length} opportunities. Keep the good ones moving.</p>
         </div>
         <button className="primary-action" onClick={handleSeedDemo} type="button">
           Load sample
